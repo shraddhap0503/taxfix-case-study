@@ -1,0 +1,9 @@
+{
+    "app_name": "FakerAPI_DataIngestion",
+    "output_raw_path": "resources/output/raw",
+    "output_cleansed_path": "resources/output/cleansed",
+    "faker_api_url": "https://fakerapi.it/api/v2/persons?_quantity={quantity}&_gender={gender}&_birthday_start={birthday_start}",
+    "default_quantity": 30000,
+    "default_gender": "null",
+    "birthday_start": "1900-01-01"
+}

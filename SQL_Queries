@@ -1,0 +1,29 @@
+--1. Which percentage of users live in Germany and use Gmail as an email provider?
+SELECT
+    (COUNT(CASE WHEN country = 'Germany' AND email LIKE '%@gmail.com' THEN 1 END) * 100.0) / COUNT(*) AS percentage_germany_gmail_users
+FROM
+    person_data;
+
+
+--2. Which are the top three countries in our database that use Gmail as an email provider (Note: Multiple countries can share the same rank.)
+SELECT tmp.country AS country
+FROM (
+        SELECT
+            country,
+            RANK() OVER (ORDER BY count(email) DESC) AS rank
+        FROM
+            person_data
+        WHERE
+            email LIKE '%@gmail.com'
+        GROUP BY
+            country
+     ) AS tmp
+WHERE tmp.rank <= 3;
+
+
+--3. How many people over 60 years use Gmail as an email provider?
+SELECT COUNT(*) AS gmail_users_over_60
+FROM person_data
+WHERE email LIKE '%@gmail.com'
+AND age_group IN ('[60-70]', '[70-80]', '80+');
+

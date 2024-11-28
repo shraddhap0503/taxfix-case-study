@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  spark:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: spark_app
+    volumes:
+      - ./main:/main
+    environment:
+      SPARK_MASTER: local
