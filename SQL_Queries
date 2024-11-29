@@ -10,7 +10,7 @@ SELECT tmp.country AS country
 FROM (
         SELECT
             country,
-            RANK() OVER (ORDER BY count(email) DESC) AS rank
+            DENSE_RANK() OVER (ORDER BY count(email) DESC) AS rank
         FROM
             person_data
         WHERE
