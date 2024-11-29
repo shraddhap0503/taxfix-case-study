@@ -35,43 +35,55 @@ def fetch_data(api_url, quantity, gender, birthday_start, retries=3, delay=2):
     :param delay: Delay between retries in seconds
     :return: Fetched data
     """
-    total_data = []  # To store all the fetched records
+
     # Calculate the number of requests needed
     requests_needed = (quantity // 1000) + (1 if quantity % 1000 != 0 else 0)
 
-    for attempt in range(retries):
-        try:
-            logging.info(f"Fetching {quantity} records in {requests_needed} requests...")
-            for i in range(requests_needed):
-                # Adjust the quantity per request if it's the last one
-                current_quantity = 1000 if i < requests_needed - 1 else (quantity - 1000 * i)
-                url = api_url.format(quantity=current_quantity, gender=gender, birthday_start=birthday_start)
+    total_data = []  # To store all the fetched records
+    for i in range(requests_needed):
+        # Adjust the quantity per request if it's the last one
+        current_quantity = 1000 if i < requests_needed - 1 else (quantity - 1000 * i)
+        url = api_url.format(quantity=current_quantity, gender=gender, birthday_start=birthday_start)
 
+        attempt = 0
+        while attempt < retries:
+            try:
                 logging.info(f"Fetching request {i + 1}/{requests_needed} (Quantity: {current_quantity})...")
+
+                # Send the request
                 response = requests.get(url, timeout=10)
 
                 if response.status_code == 200:
                     logging.info(f"Request {i + 1} fetched successfully.")
-                    total_data.extend(response.json().get("data", []))  # Add new records to the total data
+                    total_data.extend(response.json().get("data", []))
+                    break
                 elif response.status_code >= 500:
                     logging.warning(f"Internal Server Error (Request {i + 1}): Retrying...")
-                    break
+                    attempt += 1
+                    if attempt < retries:
+                        logging.info(f"Retrying {i + 1} in {delay} seconds...")
+                        time.sleep(delay)
+                    else:
+                        logging.error(f"Failed to fetch request {i + 1} after {retries} attempts.")
+                        break
                 else:
                     raise Exception(f"Unexpected status code: {response.status_code} - {response.text}")
 
-                if len(total_data) >= quantity:
+            except requests.exceptions.RequestException as e:
+                logging.warning(f"Attempt {attempt + 1}/{retries} failed for request {i + 1}: {e}")
+                attempt += 1
+                if attempt < retries:
+                    logging.info(f"Retrying {i + 1} in {delay} seconds...")
+                    time.sleep(delay)
+                else:
+                    logging.error(f"Failed to fetch request {i + 1} after {retries} attempts.")
                     break
 
-            return total_data
+        # Stop if the desired quantity of data has been fetched
+        if len(total_data) >= quantity:
+            break
 
-        except requests.exceptions.RequestException as e:
-            logging.warning(f"Attempt {attempt + 1}/{retries} failed: {e}")
-            if attempt < retries - 1:
-                logging.info(f"Retrying in {delay} seconds...")
-                time.sleep(delay)
-            else:
-                logging.error(f"Failed to fetch data after {retries} attempts.")
-                raise
+    return total_data
 
 
 # Main logic to fetch and save data
